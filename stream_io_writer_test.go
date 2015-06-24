@@ -2,16 +2,15 @@ package bunyan
 
 import (
 	"bufio"
-	"log"
-	"os"
+	"bytes"
 	"testing"
 )
 
 func TestIOWriterStream(t *testing.T) {
-	//str1 := new(bytes.Buffer)
-	//str2 := new(bytes.Buffer)
-	var str1 = os.Stdout
-	var str2 = os.Stdout
+	str1 := new(bytes.Buffer)
+	str2 := new(bytes.Buffer)
+	//var str1 = os.Stdout
+	//var str2 = os.Stdout
 	buf1 := bufio.NewWriter(str1)
 	buf2 := bufio.NewWriter(str2)
 	s1 := NewIOWriterStream(buf1, Info, nil)
@@ -23,12 +22,15 @@ func TestIOWriterStream(t *testing.T) {
 	l1.Fatal("Test")
 	l2.Fatal("Test 2")
 	buf1.Flush()
-	log.Println(s1)
-	//written := str1.Bytes()
+	//log.Println(s1)
+	written := str1.Bytes()
+	if len(written) < 1 {
+		t.Fatal("nothing written to buffer")
+	}
 	//log.Println(written)
-	var str3 string
-	lens, _ := buf1.WriteString(str3)
-	log.Println(lens)
+	//var str3 string
+	//lens, _ := buf1.WriteString(str3)
+	//log.Println(lens)
 	//log.Println(str1.Len())
 	//rbuf1 := bufio.NewReader(&str1)
 	//rbuf1.Seek(0, 0)
