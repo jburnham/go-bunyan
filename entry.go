@@ -71,7 +71,6 @@ func NewLogEntry(level LogLevel, message string) *LogEntry {
 	result.Level = level
 	result.Message = message
 	result.Time = time.Now()
-	result.Response = &Response{}
 
 	return &result
 }

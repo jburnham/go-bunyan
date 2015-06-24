@@ -4,12 +4,13 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"os"
+	"reflect"
 	"testing"
 	"time"
 )
 
 func validateLogEntry(t *testing.T, newEntry *LogEntry, originalEntry *LogEntry) {
-	if *newEntry != *originalEntry {
+	if !reflect.DeepEqual(newEntry, originalEntry) {
 		t.Error("Two entries are not equal!")
 		t.Errorf("Original; %s", originalEntry)
 		t.Errorf("New: %s", newEntry)
