@@ -5,13 +5,14 @@ import (
 	"log"
 )
 
+// Logger holds the log.Logger, its name, and any streams.
 type Logger struct {
 	*log.Logger
 	name    string
 	streams []StreamInterface
 }
 
-// Creates a new logger, given one or more streams
+// NewLogger creates a new logger, given one or more streams
 func NewLogger(name string, streams []StreamInterface) *Logger {
 	return &Logger{
 		name:    name,
@@ -19,10 +20,12 @@ func NewLogger(name string, streams []StreamInterface) *Logger {
 	}
 }
 
+// AddStream adds a stream to the log.
 func (l *Logger) AddStream(s StreamInterface) {
 	l.streams = append(l.streams, s)
 }
 
+// Log logs the logentry.
 func (l *Logger) Log(e *LogEntry) {
 	e.setLogger(l)
 
@@ -31,6 +34,7 @@ func (l *Logger) Log(e *LogEntry) {
 	}
 }
 
+// Logln logs the message at the specified log level.
 func (l *Logger) Logln(level LogLevel, message string) *LogEntry {
 	e := NewLogEntry(level, message)
 
@@ -39,6 +43,7 @@ func (l *Logger) Logln(level LogLevel, message string) *LogEntry {
 	return e
 }
 
+// LogF logs the formatted string at the specified log level.
 func (l *Logger) LogF(level LogLevel, format string, values ...interface{}) *LogEntry {
 	e := NewLogEntry(level, fmt.Sprintf(format, values...))
 
@@ -47,6 +52,7 @@ func (l *Logger) LogF(level LogLevel, format string, values ...interface{}) *Log
 	return e
 }
 
+// Trace logs the message at the Trace level.
 func (l *Logger) Trace(message string) *LogEntry {
 	e := NewLogEntry(Trace, message)
 
@@ -55,6 +61,7 @@ func (l *Logger) Trace(message string) *LogEntry {
 	return e
 }
 
+// TraceF logs the formatted string at the Trace level.
 func (l *Logger) TraceF(format string, values ...interface{}) *LogEntry {
 	e := NewLogEntry(Trace, fmt.Sprintf(format, values...))
 
@@ -63,6 +70,7 @@ func (l *Logger) TraceF(format string, values ...interface{}) *LogEntry {
 	return e
 }
 
+// Debug logs the message at the Debug level.
 func (l *Logger) Debug(message string) *LogEntry {
 	e := NewLogEntry(Debug, message)
 
@@ -71,6 +79,7 @@ func (l *Logger) Debug(message string) *LogEntry {
 	return e
 }
 
+// DebugF logs the formatted string at the Debug level.
 func (l *Logger) DebugF(format string, values ...interface{}) *LogEntry {
 	e := NewLogEntry(Debug, fmt.Sprintf(format, values...))
 
@@ -79,6 +88,7 @@ func (l *Logger) DebugF(format string, values ...interface{}) *LogEntry {
 	return e
 }
 
+// Info logs the message at the Info level.
 func (l *Logger) Info(message string) *LogEntry {
 	e := NewLogEntry(Info, message)
 
@@ -87,6 +97,7 @@ func (l *Logger) Info(message string) *LogEntry {
 	return e
 }
 
+// InfoF logs the formatted string at the Info level.
 func (l *Logger) InfoF(format string, values ...interface{}) *LogEntry {
 	e := NewLogEntry(Info, fmt.Sprintf(format, values...))
 
@@ -95,6 +106,7 @@ func (l *Logger) InfoF(format string, values ...interface{}) *LogEntry {
 	return e
 }
 
+// Warn logs the message at the Warn level.
 func (l *Logger) Warn(message string) *LogEntry {
 	e := NewLogEntry(Warn, message)
 
@@ -103,6 +115,7 @@ func (l *Logger) Warn(message string) *LogEntry {
 	return e
 }
 
+// WarnF logs the formatted string at the Warn level.
 func (l *Logger) WarnF(format string, values ...interface{}) *LogEntry {
 	e := NewLogEntry(Warn, fmt.Sprintf(format, values...))
 
@@ -111,6 +124,7 @@ func (l *Logger) WarnF(format string, values ...interface{}) *LogEntry {
 	return e
 }
 
+// Error logs the message at the Error level.
 func (l *Logger) Error(message string) *LogEntry {
 	e := NewLogEntry(Error, message)
 
@@ -119,6 +133,7 @@ func (l *Logger) Error(message string) *LogEntry {
 	return e
 }
 
+// ErrorF logs the formatted string at the Error level.
 func (l *Logger) ErrorF(format string, values ...interface{}) *LogEntry {
 	e := NewLogEntry(Error, fmt.Sprintf(format, values...))
 
@@ -127,6 +142,7 @@ func (l *Logger) ErrorF(format string, values ...interface{}) *LogEntry {
 	return e
 }
 
+// Fatal logs the message at the Fatal level.
 func (l *Logger) Fatal(message string) *LogEntry {
 	e := NewLogEntry(Fatal, message)
 
@@ -135,6 +151,7 @@ func (l *Logger) Fatal(message string) *LogEntry {
 	return e
 }
 
+// FatalF logs the formatted string at the Fatal level.
 func (l *Logger) FatalF(format string, values ...interface{}) *LogEntry {
 	e := NewLogEntry(Fatal, fmt.Sprintf(format, values...))
 
@@ -143,8 +160,8 @@ func (l *Logger) FatalF(format string, values ...interface{}) *LogEntry {
 	return e
 }
 
-// log.Logger compatibility
-
+// Println is added log.Logger compatibility and acts the same as Logln but
+// at the Info level.
 func (l *Logger) Println(val interface{}) {
 	l.Logln(Info, fmt.Sprintf("%v", val))
 }
