@@ -3,6 +3,7 @@ package bunyan
 import (
 	"encoding/json"
 	"errors"
+
 	"github.com/bugsnag/bugsnag-go"
 )
 
@@ -44,4 +45,12 @@ func (s *BugsnagStream) Publish(l *LogEntry) {
 
 		bugsnag.Notify(err, *metadata)
 	}
+}
+
+func (s *BugsnagStream) Flushable() bool {
+	return false
+}
+
+func (s *BugsnagStream) Flush() {
+	return
 }

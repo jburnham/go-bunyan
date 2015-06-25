@@ -23,3 +23,11 @@ func (s *StdoutStream) Publish(l *LogEntry) {
 		os.Stdout.WriteString("\n")
 	}
 }
+
+func (s *StdoutStream) Flushable() bool {
+	return true
+}
+
+func (s *StdoutStream) Flush() {
+	os.Stdout.Sync()
+}

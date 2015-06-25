@@ -33,3 +33,11 @@ func (s *FileStream) Publish(l *LogEntry) {
 		s.outputFile.WriteString("\n")
 	}
 }
+
+func (s *FileStream) Flushable() bool {
+	return false
+}
+
+func (s *FileStream) Flush() {
+	return
+}

@@ -21,6 +21,7 @@ func TestIOWriterStream(t *testing.T) {
 
 	l1.Fatal("Test")
 	l2.Fatal("Test 2")
+	//time.Sleep(5 * time.Second)
 	buf1.Flush()
 	//log.Println(s1)
 	written := str1.Bytes()

@@ -3,6 +3,7 @@ package bunyan
 import (
 	"fmt"
 	"log"
+	"time"
 )
 
 // Logger holds the log.Logger, its name, and any streams.
@@ -14,9 +15,22 @@ type Logger struct {
 
 // NewLogger creates a new logger, given one or more streams
 func NewLogger(name string, streams []StreamInterface) *Logger {
-	return &Logger{
+	ret := &Logger{
 		name:    name,
 		streams: streams,
+	}
+	go ret.flushAllStreams()
+	return ret
+}
+
+func (l *Logger) flushAllStreams() {
+	for {
+		time.Sleep(10 * time.Second)
+		for _, stream := range l.streams {
+			if stream.Flushable() {
+				stream.Flush()
+			}
+		}
 	}
 }
 
@@ -30,7 +44,11 @@ func (l *Logger) Log(e *LogEntry) {
 	e.setLogger(l)
 
 	for _, stream := range l.streams {
-		go stream.Publish(e)
+		if stream.Flushable() {
+			stream.Publish(e)
+		} else {
+			go stream.Publish(e)
+		}
 	}
 }
 

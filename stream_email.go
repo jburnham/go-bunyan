@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
-	"github.com/beefsack/go-rate"
 	"net/mail"
 	"net/smtp"
 	"strings"
 	"text/template"
 	"time"
+
+	"github.com/beefsack/go-rate"
 )
 
 type EmailStream struct {
@@ -103,4 +104,12 @@ func (s *EmailStream) Publish(l *LogEntry) {
 			return
 		}
 	}
+}
+
+func (s *EmailStream) Flushable() bool {
+	return false
+}
+
+func (s *EmailStream) Flush() {
+	return
 }

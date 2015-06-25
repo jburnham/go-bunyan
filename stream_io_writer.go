@@ -1,17 +1,21 @@
 package bunyan
 
-import "io"
-
 type IOWriterStream struct {
 	*Stream
-	writer io.Writer
+	writer FlushableWriter
 }
 
-func NewIOWriterStream(w io.Writer, minLogLevel LogLevel, filter StreamFilter) *IOWriterStream {
+type FlushableWriter interface {
+	Write(p []byte) (int, error)
+	Flush() error
+}
+
+func NewIOWriterStream(w FlushableWriter, minLogLevel LogLevel, filter StreamFilter) *IOWriterStream {
 	return &IOWriterStream{
 		&Stream{
 			MinLogLevel: minLogLevel,
 			Filter:      filter,
+			Flushable:   true,
 		},
 		w,
 	}
@@ -22,4 +26,11 @@ func (s *IOWriterStream) Publish(l *LogEntry) {
 		s.writer.Write([]byte(l.String()))
 		s.writer.Write([]byte("\n"))
 	}
+}
+
+func (s *IOWriterStream) Flushable() bool {
+	return s.Stream.Flushable
+}
+func (s *IOWriterStream) Flush() {
+	s.writer.Flush()
 }
