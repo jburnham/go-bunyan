@@ -13,6 +13,12 @@ import (
 	"github.com/beefsack/go-rate"
 )
 
+var (
+	pendingEmails chan *LogEntry
+	doneEmails    chan bool
+)
+
+// EmailStream defines the Stream and interface to output the logging data.
 type EmailStream struct {
 	*Stream
 	recipient   string
@@ -21,12 +27,17 @@ type EmailStream struct {
 	rateLimiter *rate.RateLimiter
 }
 
+// NewEmailStream creates a new EmailStream with the specified logging
+// level and and potential filters.
 func NewEmailStream(minLogLevel LogLevel, filter StreamFilter, templateSource string, recipient, mailServer string, minimumInterval time.Duration) (result *EmailStream) {
 	t, err := template.New("email").Parse(templateSource)
 
 	if err != nil {
 		panic(fmt.Sprintf("Unable to compile email template: %s", err.Error()))
 	}
+
+	pendingEmails = make(chan *LogEntry)
+	doneEmails = make(chan bool)
 
 	result = &EmailStream{
 		Stream: &Stream{
@@ -39,24 +50,36 @@ func NewEmailStream(minLogLevel LogLevel, filter StreamFilter, templateSource st
 		rateLimiter: rate.New(1, minimumInterval),
 	}
 
+	// run the goroutine that processes all incoming logs to be emailed
+	go dequeueEmails(result)
 	return
 }
 
-func (s *EmailStream) Publish(l *LogEntry) {
-	if ok, _ := s.rateLimiter.Try(); !ok {
-		// No more than 1 e-mail for each period!
+func enqueueEmail(logEntry *LogEntry) {
+	pendingEmails <- logEntry
+}
 
-		return
+func dequeueEmails(stream *EmailStream) {
+	for {
+		logEntry, more := <-pendingEmails
+		if more {
+			publishEmails(stream, logEntry)
+		} else {
+			doneEmails <- true
+			return
+		}
 	}
+}
 
+func publishEmails(stream *EmailStream, l *LogEntry) {
 	encodeRFC2047 := func(String string) string {
-		addr := mail.Address{String, ""}
+		addr := mail.Address{Name: String, Address: ""}
 		return strings.Trim(addr.String(), " <>")
 	}
 
-	if s.shouldPublish(l) {
+	if stream.shouldPublish(l) {
 		var output bytes.Buffer
-		err := s.template.ExecuteTemplate(&output, "email", l)
+		err := stream.template.ExecuteTemplate(&output, "email", l)
 
 		if err != nil {
 			println(fmt.Sprintf("Error compiling exception template: %s", err))
@@ -64,7 +87,7 @@ func (s *EmailStream) Publish(l *LogEntry) {
 
 		header := make(map[string]string)
 		header["From"] = "Telemetry API <noreply@telemetryapp.com>"
-		header["To"] = s.recipient
+		header["To"] = stream.recipient
 		header["Subject"] = encodeRFC2047("Telemetry API Exception Report")
 		header["MIME-Version"] = "1.0"
 		header["Content-Type"] = "text/plain; charset=\"utf-8\""
@@ -76,17 +99,20 @@ func (s *EmailStream) Publish(l *LogEntry) {
 		}
 		message += "\r\n" + base64.StdEncoding.EncodeToString(output.Bytes())
 
-		c, err := smtp.Dial(s.mailServer)
+		c, err := smtp.Dial(stream.mailServer)
 
-		defer c.Close()
-
+		println("dialed")
 		if err != nil {
 			println(fmt.Sprintf("Error connecting to SMTP server: %s", err))
 			return
 		}
 
-		c.Mail("Telemetry Composerd <noreply@telemetryapp.com>")
-		c.Rcpt(s.recipient)
+		if c != nil {
+			defer c.Close()
+		}
+
+		c.Mail("noreply@telemetryapp.com")
+		c.Rcpt(stream.recipient)
 
 		wc, err := c.Data()
 
@@ -95,7 +121,9 @@ func (s *EmailStream) Publish(l *LogEntry) {
 			return
 		}
 
-		defer wc.Close()
+		if wc != nil {
+			defer wc.Close()
+		}
 
 		_, err = bytes.NewBuffer([]byte(message)).WriteTo(wc)
 
@@ -106,10 +134,20 @@ func (s *EmailStream) Publish(l *LogEntry) {
 	}
 }
 
-func (s *EmailStream) Flushable() bool {
-	return false
+// Publish writes the logging data to the stream.
+func (s *EmailStream) Publish(l *LogEntry) {
+	if ok, _ := s.rateLimiter.Try(); !ok {
+		// No more than 1 e-mail for each period!
+
+		return
+	}
+
+	enqueueEmail(l)
+
 }
 
-func (s *EmailStream) Flush() {
-	return
+// Close flushes and closes any pending writes to the log stream before shutdown.
+func (s *EmailStream) Close() {
+	close(pendingEmails)
+	<-doneEmails
 }

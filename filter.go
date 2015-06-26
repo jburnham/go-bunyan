@@ -1,5 +1,7 @@
 package bunyan
 
+// FilterGenerator returns a StreamFilter that operated on the LogEntry's request
+// and response fields.
 func FilterGenerator(minStatusCode, maxStatusCode int, excludeStatusCodes []int, allowRequestBody, allowResponseBody bool) StreamFilter {
 	statusCodeMap := map[int]bool{}
 

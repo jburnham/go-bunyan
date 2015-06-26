@@ -3,7 +3,6 @@ package bunyan
 import (
 	"fmt"
 	"log"
-	"time"
 )
 
 // Logger holds the log.Logger, its name, and any streams.
@@ -15,22 +14,9 @@ type Logger struct {
 
 // NewLogger creates a new logger, given one or more streams
 func NewLogger(name string, streams []StreamInterface) *Logger {
-	ret := &Logger{
+	return &Logger{
 		name:    name,
 		streams: streams,
-	}
-	go ret.flushAllStreams()
-	return ret
-}
-
-func (l *Logger) flushAllStreams() {
-	for {
-		time.Sleep(10 * time.Second)
-		for _, stream := range l.streams {
-			if stream.Flushable() {
-				stream.Flush()
-			}
-		}
 	}
 }
 
@@ -44,11 +30,7 @@ func (l *Logger) Log(e *LogEntry) {
 	e.setLogger(l)
 
 	for _, stream := range l.streams {
-		if stream.Flushable() {
-			stream.Publish(e)
-		} else {
-			go stream.Publish(e)
-		}
+		stream.Publish(e)
 	}
 }
 
@@ -176,6 +158,15 @@ func (l *Logger) FatalF(format string, values ...interface{}) *LogEntry {
 	l.Log(e)
 
 	return e
+}
+
+// Close flushes and closes all streams in preparation for process exit.
+// Use of this function should guarantee that all logs are persisted in their
+// appropriate location.
+func (l *Logger) Close() {
+	for _, stream := range l.streams {
+		stream.Close()
+	}
 }
 
 // Println is added log.Logger compatibility and acts the same as Logln but

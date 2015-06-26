@@ -1,8 +1,6 @@
 package bunyan
 
-import (
-	"testing"
-)
+import "testing"
 
 func TestStdoutStream(t *testing.T) {
 	s := NewStdoutStream(Info, nil)
@@ -10,4 +8,5 @@ func TestStdoutStream(t *testing.T) {
 	l := NewLogger("Test", []StreamInterface{s})
 
 	l.Fatal("Test")
+	l.Info("Info test")
 }

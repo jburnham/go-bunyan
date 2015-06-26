@@ -4,10 +4,13 @@ import (
 	"os"
 )
 
+// StdoutStream defines the Stream and interface to output the logging data.
 type StdoutStream struct {
 	*Stream
 }
 
+// NewStdoutStream creates a new StdoutStream with the specified logging
+// level and and potential filters.
 func NewStdoutStream(minLogLevel LogLevel, filter StreamFilter) *StdoutStream {
 	return &StdoutStream{
 		&Stream{
@@ -17,6 +20,7 @@ func NewStdoutStream(minLogLevel LogLevel, filter StreamFilter) *StdoutStream {
 	}
 }
 
+// Publish writes the logging data to the stream.
 func (s *StdoutStream) Publish(l *LogEntry) {
 	if s.shouldPublish(l) {
 		os.Stdout.WriteString(l.String())
@@ -24,10 +28,7 @@ func (s *StdoutStream) Publish(l *LogEntry) {
 	}
 }
 
-func (s *StdoutStream) Flushable() bool {
-	return true
-}
-
-func (s *StdoutStream) Flush() {
+// Close flushes and closes any pending writes to the log stream before shutdown.
+func (s *StdoutStream) Close() {
 	os.Stdout.Sync()
 }
